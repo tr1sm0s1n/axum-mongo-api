@@ -1,9 +1,14 @@
+mod config;
+
 use axum::{routing::get, Router};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
+    // conncecting to mongodb
+    config::connect().await.unwrap();
+
     // logging middleware
     tracing_subscriber::registry()
         .with(
