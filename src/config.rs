@@ -4,7 +4,7 @@ use mongodb::{
     Client,
 };
 
-pub async fn connect() -> mongodb::error::Result<()> {
+pub async fn connect() -> mongodb::error::Result<Client> {
     // Replace the placeholder with your Atlas connection string
     let uri = "mongodb://root:rootpw@127.0.0.1:27017/axum-mongo?authSource=admin";
     let mut client_options = ClientOptions::parse_async(uri).await?;
@@ -22,5 +22,6 @@ pub async fn connect() -> mongodb::error::Result<()> {
         .run_command(doc! { "ping": 1 }, None)
         .await?;
     println!("Pinged your database. Successfully connected to MongoDB!");
-    Ok(())
+
+    Ok(client)
 }

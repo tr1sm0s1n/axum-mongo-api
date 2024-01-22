@@ -1,13 +1,15 @@
 mod config;
+mod models;
 
 use axum::{routing::get, Router};
+use mongodb::{Client, Collection};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
-    // conncecting to mongodb
-    config::connect().await.unwrap();
+    // connecting to mongodb
+    let client = config::connect().await.unwrap();
 
     // logging middleware
     tracing_subscriber::registry()
@@ -24,13 +26,18 @@ async fn main() {
         .unwrap();
 
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app()).await.unwrap();
+    axum::serve(listener, app(client)).await.unwrap();
 }
 
-fn app() -> Router {
+fn app(client: Client) -> Router {
     Router::new()
         .route("/", get(home))
         .layer(TraceLayer::new_for_http())
+        .with_state((|| {
+            let collection: Collection<models::Certificate> =
+                client.database("axum-mongo").collection("certificates");
+            collection
+        })())
 }
 
 async fn home() -> &'static str {
