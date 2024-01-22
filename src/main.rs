@@ -1,4 +1,5 @@
 mod config;
+mod handlers;
 mod models;
 
 use axum::{routing::get, Router};
@@ -32,6 +33,7 @@ async fn main() {
 fn app(client: Client) -> Router {
     Router::new()
         .route("/", get(home))
+        .route("/read", get(handlers::count))
         .layer(TraceLayer::new_for_http())
         .with_state((|| {
             let collection: Collection<models::Certificate> =
