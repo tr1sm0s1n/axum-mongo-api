@@ -2,7 +2,10 @@ mod config;
 mod handlers;
 mod models;
 
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use mongodb::{Client, Collection};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -35,6 +38,7 @@ fn app(client: Client) -> Router {
     Router::new()
         .route("/", get(home))
         .route("/count", get(handlers::count))
+        .route("/create", post(handlers::create))
         .layer(TraceLayer::new_for_http())
         .with_state(collection)
 }
