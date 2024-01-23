@@ -39,6 +39,8 @@ fn app(client: Client) -> Router {
         .route("/", get(home))
         .route("/count", get(handlers::count))
         .route("/create", post(handlers::create))
+        .route("/read", get(handlers::read_all))
+        .route("/read/:id", get(handlers::read_one))
         .layer(TraceLayer::new_for_http())
         .with_state(collection)
 }
