@@ -22,24 +22,21 @@ async fn main() {
         .init();
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
 
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app(client)).await.unwrap();
 }
 
 fn app(client: Client) -> Router {
+    let collection: Collection<models::Certificate> =
+        client.database("axum-mongo").collection("certificates");
+
     Router::new()
         .route("/", get(home))
-        .route("/read", get(handlers::count))
+        .route("/count", get(handlers::count))
         .layer(TraceLayer::new_for_http())
-        .with_state((|| {
-            let collection: Collection<models::Certificate> =
-                client.database("axum-mongo").collection("certificates");
-            collection
-        })())
+        .with_state(collection)
 }
 
 async fn home() -> &'static str {
