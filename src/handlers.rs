@@ -19,7 +19,7 @@ pub async fn create(
     State(db): State<Collection<Certificate>>,
     Json(input): Json<Certificate>,
 ) -> impl IntoResponse {
-    let result: mongodb::results::InsertOneResult = db.insert_one(input, None).await.unwrap();
+    let result = db.insert_one(input, None).await.unwrap();
     println!("Inserted a document with _id: {}", result.inserted_id);
 
     (StatusCode::CREATED, Json(result))
@@ -46,6 +46,20 @@ pub async fn read_one(
     if result.is_none() {
         return (StatusCode::NOT_FOUND, Json(result));
     }
+
+    (StatusCode::OK, Json(result))
+}
+
+pub async fn update_one(
+    Path(id): Path<u32>,
+    State(db): State<Collection<Certificate>>,
+    Json(input): Json<Certificate>,
+) -> impl IntoResponse {
+    let result = db
+        .replace_one(doc! { "_id": id }, input, None)
+        .await
+        .unwrap();
+    println!("Updated {:?} document(s)", result.modified_count);
 
     (StatusCode::OK, Json(result))
 }

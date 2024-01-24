@@ -3,7 +3,7 @@ mod handlers;
 mod models;
 
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use mongodb::{Client, Collection};
@@ -41,6 +41,7 @@ fn app(client: Client) -> Router {
         .route("/create", post(handlers::create))
         .route("/read", get(handlers::read_all))
         .route("/read/:id", get(handlers::read_one))
+        .route("/update/:id", put(handlers::update_one))
         .layer(TraceLayer::new_for_http())
         .with_state(collection)
 }
