@@ -63,3 +63,13 @@ pub async fn update_one(
 
     (StatusCode::OK, Json(result))
 }
+
+pub async fn delete_one(
+    Path(id): Path<u32>,
+    State(db): State<Collection<Certificate>>,
+) -> impl IntoResponse {
+    let result = db.delete_one(doc! { "_id": id }, None).await.unwrap();
+    println!("Deleted {:?} document(s)", result.deleted_count);
+
+    (StatusCode::OK, Json(result))
+}

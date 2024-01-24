@@ -42,6 +42,7 @@ fn app(client: Client) -> Router {
         .route("/read", get(handlers::read_all))
         .route("/read/:id", get(handlers::read_one))
         .route("/update/:id", put(handlers::update_one))
+        .route("/delete/:id", delete(handlers::delete_one))
         .layer(TraceLayer::new_for_http())
         .with_state(collection)
 }
