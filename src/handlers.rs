@@ -1,75 +1,92 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
     Json,
 };
 use futures::TryStreamExt;
-use mongodb::{bson::doc, Collection};
+use mongodb::{
+    bson::doc,
+    results::{DeleteResult, InsertOneResult, UpdateResult},
+    Collection,
+};
 
 use crate::models::Certificate;
 
-pub async fn count(State(db): State<Collection<Certificate>>) -> impl IntoResponse {
-    let count = db.count_documents(None, None).await.unwrap();
+pub async fn count(
+    State(db): State<Collection<Certificate>>,
+) -> Result<Json<u64>, (StatusCode, String)> {
+    let count = db
+        .count_documents(None, None)
+        .await
+        .map_err(internal_error)?;
 
-    (StatusCode::OK, Json(count))
+    Ok(Json(count))
 }
 
 pub async fn create(
     State(db): State<Collection<Certificate>>,
     Json(input): Json<Certificate>,
-) -> impl IntoResponse {
-    let result = db.insert_one(input, None).await.unwrap();
+) -> Result<Json<InsertOneResult>, (StatusCode, String)> {
+    let result = db.insert_one(input, None).await.map_err(internal_error)?;
     println!("Inserted a document with _id: {}", result.inserted_id);
 
-    (StatusCode::CREATED, Json(result))
+    Ok(Json(result))
 }
 
-pub async fn read_all(State(db): State<Collection<Certificate>>) -> impl IntoResponse {
+pub async fn read_all(
+    State(db): State<Collection<Certificate>>,
+) -> Result<Json<Vec<Certificate>>, (StatusCode, String)> {
     let mut cursor = db.find(None, None).await.unwrap();
 
     let mut certificates = Vec::new();
-    while let Some(c) = cursor.try_next().await.unwrap() {
+    while let Some(c) = cursor.try_next().await.map_err(internal_error)? {
         println!("{:?}", c);
         certificates.push(c)
     }
 
-    (StatusCode::OK, Json(certificates))
+    Ok(Json(certificates))
 }
 
 pub async fn read_one(
     Path(id): Path<u32>,
     State(db): State<Collection<Certificate>>,
-) -> impl IntoResponse {
-    let result = db.find_one(doc! { "_id": id }, None).await.unwrap();
+) -> Result<Json<Option<Certificate>>, (StatusCode, String)> {
+    let result = db
+        .find_one(doc! { "_id": id }, None)
+        .await
+        .map_err(internal_error)?;
     println!("{:?}", result);
-    if result.is_none() {
-        return (StatusCode::NOT_FOUND, Json(result));
-    }
 
-    (StatusCode::OK, Json(result))
+    Ok(Json(result))
 }
 
 pub async fn update_one(
     Path(id): Path<u32>,
     State(db): State<Collection<Certificate>>,
     Json(input): Json<Certificate>,
-) -> impl IntoResponse {
+) -> Result<Json<UpdateResult>, (StatusCode, String)> {
     let result = db
         .replace_one(doc! { "_id": id }, input, None)
         .await
-        .unwrap();
+        .map_err(internal_error)?;
     println!("Updated {:?} document(s)", result.modified_count);
 
-    (StatusCode::OK, Json(result))
+    Ok(Json(result))
 }
 
 pub async fn delete_one(
     Path(id): Path<u32>,
     State(db): State<Collection<Certificate>>,
-) -> impl IntoResponse {
+) -> Result<Json<DeleteResult>, (StatusCode, String)> {
     let result = db.delete_one(doc! { "_id": id }, None).await.unwrap();
     println!("Deleted {:?} document(s)", result.deleted_count);
 
-    (StatusCode::OK, Json(result))
+    Ok(Json(result))
+}
+
+fn internal_error<E>(err: E) -> (StatusCode, String)
+where
+    E: std::error::Error,
+{
+    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
