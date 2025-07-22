@@ -21,19 +21,19 @@ cd axum-mongo-api
 Install Rust
 
 ```bash
-make install
+just install
 ```
 
 Start the database
 
 ```bash
-make up
+just up
 ```
 
 Run the application
 
 ```bash
-make run
+just run
 ```
 
 Create a certificate
@@ -69,11 +69,11 @@ curl -X DELETE http://127.0.0.1:8080/delete/1
 View the database (optional)
 
 ```bash
-make enter
+just enter
 ```
 
 Stop the database
 
 ```bash
-make down
+just down
 ```
